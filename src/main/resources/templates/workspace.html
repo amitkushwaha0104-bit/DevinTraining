@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head('Case workspace')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<div th:replace="~{fragments :: alerts}"></div>
+<main class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h1 class="h3 mb-0">Case <span th:text="${entity.caseId}"></span>
+            <span class="badge bg-secondary" th:text="${entity.status}"></span></h1>
+        <div>
+            <form th:action="@{/cases/{id}/investigate(id=${entity.caseId})}" method="post" class="d-inline"
+                  sec:authorize="hasRole('INVESTIGATOR')"
+                  th:if="${entity.status.name() == 'NEW' or entity.status.name() == 'INCOMPLETE'}">
+                <button class="btn btn-primary" type="submit">Start investigation</button>
+            </form>
+            <a class="btn btn-outline-primary" th:href="@{/cases/{id}/review(id=${entity.caseId})}"
+               sec:authorize="hasRole('REVIEWER')"
+               th:if="${entity.status.name() == 'READY_FOR_REVIEW' or entity.status.name() == 'UNDER_REVIEW'}">Review</a>
+            <a class="btn btn-outline-secondary" th:href="@{/cases/{id}/audit(id=${entity.caseId})}">Audit</a>
+        </div>
+    </div>
+
+    <div class="row mt-3 g-3">
+        <div class="col-lg-5">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header">Claim <span class="badge bg-info text-dark">customer statement</span></div>
+                <div class="card-body">
+                    <dl class="row small mb-0">
+                        <dt class="col-5">Customer ref</dt><dd class="col-7" th:text="${entity.maskedCustomerRef}"></dd>
+                        <dt class="col-5">Transaction</dt><dd class="col-7" th:text="${claim.transactionRef}"></dd>
+                        <dt class="col-5">Amount</dt><dd class="col-7" th:text="${claim.amount + ' ' + claim.currency}"></dd>
+                        <dt class="col-5">Channel / status</dt><dd class="col-7" th:text="${claim.transactionChannel + ' / ' + claim.transactionStatus}"></dd>
+                        <dt class="col-5">Merchant</dt><dd class="col-7" th:text="${claim.maskedMerchant}"></dd>
+                        <dt class="col-5">Issue type</dt><dd class="col-7" th:text="${claim.issueType}"></dd>
+                        <dt class="col-5">Card held / recognised</dt>
+                        <dd class="col-7" th:text="${claim.cardPossession} + ' / ' + ${claim.merchantRecognised}"></dd>
+                        <dt class="col-5">Statement</dt><dd class="col-7" th:text="${claim.customerStatement}"></dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-header">Bounded investigation plan</div>
+                <ol class="list-group list-group-flush list-group-numbered">
+                    <li class="list-group-item small" th:each="step : ${plan}" th:text="${step}"></li>
+                </ol>
+            </div>
+
+            <div class="card shadow-sm" id="followup">
+                <div class="card-header">Case-scoped follow-up <span class="badge bg-info text-dark">memory isolated per case</span></div>
+                <div class="card-body">
+                    <form th:action="@{/cases/{id}/messages(id=${entity.caseId})}" method="post"
+                          sec:authorize="hasRole('INVESTIGATOR')">
+                        <label class="form-label" for="message">Question</label>
+                        <textarea class="form-control" id="message" name="message" rows="2" maxlength="2000" required></textarea>
+                        <button class="btn btn-outline-primary btn-sm mt-2" type="submit">Ask</button>
+                    </form>
+                    <p class="text-muted small" sec:authorize="!hasRole('INVESTIGATOR')">Follow-up requires the investigator role.</p>
+                    <div class="alert alert-secondary mt-3" role="status" th:if="${qaAnswer}">
+                        <p class="mb-1" th:text="${qaAnswer}"></p>
+                        <small class="text-muted" th:if="${qaCitations != null and !#lists.isEmpty(qaCitations)}">
+                            Citations:
+                            <span th:each="c : ${qaCitations}"
+                                  th:text="${c.documentId} + ' v' + ${c.version} + ' §' + ${c.section} + ' '"></span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header">Tool execution trace</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Trace</th><th>Tool</th><th>Status</th><th>ms</th><th>Summary</th></tr></thead>
+                        <tbody>
+                        <tr th:each="t : ${traces}">
+                            <td th:text="${t.traceId}"></td>
+                            <td th:text="${t.toolName}"></td>
+                            <td><span class="badge" th:classappend="${t.status.name() == 'SUCCESS'} ? 'bg-success' : 'bg-danger'" th:text="${t.status}"></span></td>
+                            <td th:text="${t.durationMs}"></td>
+                            <td class="small text-truncate" style="max-width: 260px" th:title="${t.resultSummary}" th:text="${t.resultSummary}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(traces)}"><td colspan="5" class="text-muted">No tools have run yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card shadow-sm" th:if="${recommendation != null}">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Recommendation <span class="badge bg-warning text-dark">advisory - human review required</span></span>
+                    <span class="badge bg-dark" th:text="${recommendation.mode}"></span>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col"><div class="small text-muted">Classification</div>
+                            <div class="fw-bold" th:text="${recommendation.classification}"></div></div>
+                        <div class="col"><div class="small text-muted">Risk</div>
+                            <div class="fw-bold" th:text="${recommendation.riskLevel}"></div></div>
+                        <div class="col"><div class="small text-muted">Route</div>
+                            <div class="fw-bold" th:text="${recommendation.recommendedRoute}"></div></div>
+                        <div class="col"><div class="small text-muted">Confidence</div>
+                            <div class="fw-bold" th:text="${#numbers.formatDecimal(recommendation.confidence,1,2)}"></div></div>
+                    </div>
+                    <p th:text="${recommendation.rationale}"></p>
+                    <p class="small" th:if="${!#lists.isEmpty(rules)}">Rules fired:
+                        <code th:each="r : ${rules}" th:text="${r + ' '}"></code></p>
+                    <div class="alert alert-warning small" role="alert" th:if="${!#lists.isEmpty(missing)}">
+                        Missing / contradictory information:
+                        <ul class="mb-0"><li th:each="m : ${missing}" th:text="${m}"></li></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3" th:if="${!#lists.isEmpty(reviews)}">
+                <div class="card-header">Reviewer dispositions</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item small" th:each="r : ${reviews}">
+                        <strong th:text="${r.reviewId}"></strong> · <span th:text="${r.reviewerId}"></span> ·
+                        <span th:text="${r.action}"></span>
+                        <span th:if="${r.selectedRoute}" th:text="'→ ' + ${r.selectedRoute}"></span> ·
+                        <em th:text="${r.reason}"></em>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

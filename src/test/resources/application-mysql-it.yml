@@ -1,0 +1,21 @@
+spring:
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  ai:
+    anthropic:
+      api-key: test-placeholder-key
+
+capstone:
+  processor-mode: rules
+  human-review-required: true
+  retrieval:
+    top-k: 4
+    similarity-threshold: 0.10
+  memory:
+    max-messages: 12
+  tools:
+    timeout-ms: 2500
+    deterministic-seed: fraud-training-v1

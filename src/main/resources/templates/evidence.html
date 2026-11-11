@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Evidence')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main class="container-fluid py-4">
+    <h1 class="h3">Evidence workspace <small class="text-muted" th:text="${entity.caseId}"></small></h1>
+    <a th:href="@{/cases/{id}(id=${entity.caseId})}" class="btn btn-sm btn-outline-secondary mb-3">← Workspace</a>
+    <div class="row g-3">
+        <div class="col-md-6 col-xl-4" th:each="e : ${evidence}">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between">
+                    <span th:text="${e.type}"></span>
+                    <span class="badge" th:classappend="${e.severity.name() == 'HIGH'} ? 'bg-danger' : (${e.severity.name() == 'MEDIUM'} ? 'bg-warning text-dark' : 'bg-secondary')"
+                          th:text="${e.severity}"></span>
+                </div>
+                <div class="card-body">
+                    <p class="small" th:text="${e.valueSummary}"></p>
+                </div>
+                <div class="card-footer small text-muted">
+                    <div th:text="${e.evidenceId}"></div>
+                    <div th:text="'provenance: ' + ${e.provenance}"></div>
+                    <div th:text="${#temporals.format(e.observedAt, 'yyyy-MM-dd HH:mm:ss')}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p class="text-muted mt-3" th:if="${#lists.isEmpty(evidence)}">No evidence recorded yet.</p>
+</main>
+</body>
+</html>

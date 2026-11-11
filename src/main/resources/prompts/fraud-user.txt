@@ -1,0 +1,18 @@
+Investigation goal: {investigationGoal}
+
+=== CASE FACTS (validated intake) ===
+{caseSummary}
+
+=== TOOL EVIDENCE ===
+{toolEvidence}
+
+=== RETRIEVED POLICY ===
+{policyContext}
+
+=== PRIOR CASE CONVERSATION ===
+{conversationContext}
+
+Produce the recommendation JSON for case {caseId} now. Fields: caseId, classification, riskLevel,
+recommendedRoute, confidence, humanReviewRequired, evidenceIds, policyCitations (documentId, version,
+section, chunkId, score), missingInformation, ruleIds, toolTraceIds, rationale. Link every claim in the
+rationale to an evidence id or a policy citation.

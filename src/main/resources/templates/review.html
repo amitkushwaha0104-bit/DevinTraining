@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Human review')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<div th:replace="~{fragments :: alerts}"></div>
+<main class="container py-4" style="max-width: 900px;">
+    <h1 class="h3">Human review <small class="text-muted" th:text="${entity.caseId}"></small></h1>
+    <a th:href="@{/cases/{id}(id=${entity.caseId})}" class="btn btn-sm btn-outline-secondary mb-3">← Workspace</a>
+
+    <div class="card shadow-sm mb-3" th:if="${recommendation != null}">
+        <div class="card-header">Agent recommendation <span class="badge bg-warning text-dark">advisory only</span></div>
+        <div class="card-body">
+            <p><strong th:text="${recommendation.classification}"></strong> →
+                <span th:text="${recommendation.recommendedRoute}"></span> · risk
+                <span th:text="${recommendation.riskLevel}"></span> · confidence
+                <span th:text="${#numbers.formatDecimal(recommendation.confidence,1,2)}"></span></p>
+            <p th:text="${recommendation.rationale}"></p>
+            <div class="alert alert-warning small" th:if="${!#lists.isEmpty(missing)}">
+                Missing information: <span th:text="${#strings.listJoin(missing, '; ')}"></span>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-info" th:if="${recommendation == null}">No recommendation exists yet.</div>
+
+    <form class="card card-body shadow-sm" th:action="@{/cases/{id}/review(id=${entity.caseId})}" method="post">
+        <div class="mb-3">
+            <label class="form-label" for="action">Disposition</label>
+            <select class="form-select" id="action" name="action" required>
+                <option value="ACCEPT_AND_ROUTE">Accept recommendation and route</option>
+                <option value="REROUTE">Reroute to a different queue</option>
+                <option value="ESCALATE">Escalate to fraud investigation</option>
+                <option value="REQUEST_INFORMATION">Request more information</option>
+                <option value="CLOSE_CASE">Close case</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="selectedRoute">Selected route (required when rerouting)</label>
+            <select class="form-select" id="selectedRoute" name="selectedRoute">
+                <option value="">-</option>
+                <option value="FRAUD_INVESTIGATION">FRAUD_INVESTIGATION</option>
+                <option value="DISPUTE_OPERATIONS">DISPUTE_OPERATIONS</option>
+                <option value="PAYMENT_OPERATIONS">PAYMENT_OPERATIONS</option>
+                <option value="MANUAL_REVIEW">MANUAL_REVIEW</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="reason">Reviewer rationale <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="reason" name="reason" rows="3" maxlength="4000" required
+                      aria-describedby="reasonHelp"></textarea>
+            <div id="reasonHelp" class="form-text">Mandatory. Recorded in the append-only audit trail with your identity.</div>
+        </div>
+        <button class="btn btn-primary" type="submit"
+                th:disabled="${recommendation == null and entity.status.name() != 'READY_FOR_REVIEW' and entity.status.name() != 'UNDER_REVIEW'}">
+            Submit disposition</button>
+    </form>
+
+    <h2 class="h5 mt-4" th:if="${!#lists.isEmpty(reviews)}">Prior dispositions</h2>
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item small" th:each="r : ${reviews}">
+            <strong th:text="${r.reviewId}"></strong> · <span th:text="${r.reviewerId}"></span> ·
+            <span th:text="${r.action}"></span>
+            <span th:if="${r.selectedRoute}" th:text="'→ ' + ${r.selectedRoute}"></span> ·
+            <em th:text="${r.reason}"></em>
+        </li>
+    </ul>
+</main>
+</body>
+</html>

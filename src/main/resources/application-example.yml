@@ -1,0 +1,30 @@
+# Example configuration - copy to application-local.yml or export env vars.
+# NEVER commit real credentials.
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/fraudcapstone?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: fraud
+    password: <DB_PASSWORD>
+  ai:
+    anthropic:
+      api-key: <ANTHROPIC_API_KEY>
+      chat:
+        options:
+          model: claude-sonnet-4-5
+          temperature: 0.0
+          max-tokens: 2000
+
+capstone:
+  processor-mode: spring-ai   # rules | spring-ai
+  human-review-required: true
+  allow-financial-actions: false
+  allow-customer-contact: false
+  retrieval:
+    top-k: 4
+    similarity-threshold: 0.10
+  memory:
+    max-messages: 12
+  tools:
+    timeout-ms: 2500
+    deterministic-seed: fraud-training-v1

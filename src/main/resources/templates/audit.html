@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Audit trail')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main class="container-fluid py-4">
+    <h1 class="h3">Audit trail <small class="text-muted" th:text="${entity.caseId}"></small></h1>
+    <a th:href="@{/cases/{id}(id=${entity.caseId})}" class="btn btn-sm btn-outline-secondary mb-3">← Workspace</a>
+    <p class="small text-muted">Append-only. Payloads are hashed - no sensitive content is stored.</p>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Event</th><th>Type</th><th>Actor</th><th>Recorded</th><th>Payload hash</th><th>Summary</th></tr></thead>
+            <tbody>
+            <tr th:each="e : ${events}">
+                <td th:text="${e.eventId}"></td>
+                <td th:text="${e.eventType}"></td>
+                <td th:text="${e.actorType} + (e.actorId != null ? ':' + ${e.actorId} : '')"></td>
+                <td th:text="${#temporals.format(e.recordedAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                <td class="text-truncate" style="max-width:140px" th:title="${e.payloadHash}" th:text="${e.payloadHash}"></td>
+                <td class="small" th:text="${e.summary}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: fraud-investigation-agent
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/fraudcapstone?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USER:fraud}
+    password: ${DB_PASSWORD:fraud}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  ai:
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:not-configured}
+      chat:
+        options:
+          model: ${ANTHROPIC_MODEL:claude-sonnet-4-5}
+          temperature: 0.0
+          max-tokens: 2000
+server:
+  port: 8080
+
+capstone:
+  # rules | spring-ai  (rules mode works fully without a model)
+  processor-mode: ${PROCESSOR_MODE:rules}
+  human-review-required: true
+  allow-financial-actions: false
+  allow-customer-contact: false
+  retrieval:
+    top-k: 4
+    # hashing embedding produces sparse cosine scores; 0.10 separates
+    # on-topic from unrelated queries in the synthetic corpus
+    similarity-threshold: 0.10
+  memory:
+    max-messages: 12
+  tools:
+    timeout-ms: 2500
+    deterministic-seed: fraud-training-v1
+  demo-users:
+    agent-password: ${AGENT_PASSWORD:agent123}
+    investigator-password: ${INVESTIGATOR_PASSWORD:invest123}
+    reviewer-password: ${REVIEWER_PASSWORD:review123}
+    auditor-password: ${AUDITOR_PASSWORD:audit123}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    com.capstone.fraud: INFO

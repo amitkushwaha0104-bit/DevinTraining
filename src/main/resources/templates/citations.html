@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Policy citations')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main class="container-fluid py-4">
+    <h1 class="h3">Policy citations <small class="text-muted" th:text="${entity.caseId}"></small></h1>
+    <a th:href="@{/cases/{id}(id=${entity.caseId})}" class="btn btn-sm btn-outline-secondary mb-3">← Workspace</a>
+    <p class="small text-muted">Retrieval: top-K = <span th:text="${topK}"></span>,
+        similarity threshold = <span th:text="${threshold}"></span>.
+        Withdrawn policy is filtered at ingestion and can never be cited.</p>
+
+    <div class="alert alert-info" role="status" th:if="${#lists.isEmpty(citations)}">
+        No policy passage met the threshold for the latest recommendation - the system abstained rather than
+        inventing procedure.</div>
+
+    <div class="row g-3">
+        <div class="col-lg-6" th:each="c : ${citations}">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <strong th:text="${c.documentId}"></strong>
+                    <span class="badge bg-dark" th:text="'v' + ${c.version}"></span>
+                    <span class="badge bg-secondary" th:text="'§ ' + ${c.section}"></span>
+                    <span class="badge bg-info text-dark" th:text="'score ' + ${#numbers.formatDecimal(c.score,1,3)}"></span>
+                </div>
+                <div class="card-body">
+                    <p class="small" th:text="${c.passage}"></p>
+                </div>
+                <div class="card-footer small text-muted" th:text="'chunk: ' + ${c.chunkId}"></div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h5 mt-4">Active policy documents</h2>
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item small" th:each="d : ${policyDocs}"
+            th:text="${d.documentId} + ' v' + ${d.version} + ' — ' + ${d.title} + ' (effective ' + ${d.effectiveDate} + ', owner ' + ${d.owner} + ')'"></li>
+    </ul>
+</main>
+</body>
+</html>
